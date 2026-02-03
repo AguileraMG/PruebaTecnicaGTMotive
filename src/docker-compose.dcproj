@@ -15,12 +15,5 @@
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
-    <None Include="FUNCTIONAL_TESTS_CORRECTION_COMPLETE.md" />
-    <None Include="README.md" />
-    <None Include="REFACTOR_FINAL_STATUS.md" />
-    <None Include="REFACTOR_HTTP_STATUS_CODES_SUMMARY.md" />
-    <None Include="REFACTOR_RICH_DOMAIN_MODEL.md" />
-    <None Include="SOLUTION_OVERVIEW.md" />
-    <None Include="TESTS_CORRECTION_STATUS.md" />
   </ItemGroup>
 </Project>
