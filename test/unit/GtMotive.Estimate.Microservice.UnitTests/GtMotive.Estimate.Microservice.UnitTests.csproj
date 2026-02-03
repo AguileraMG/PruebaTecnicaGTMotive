@@ -8,9 +8,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Api\**" />
     <Compile Remove="Domain\**" />
+    <Compile Remove="Infrastructure\**" />
+    <EmbeddedResource Remove="Api\**" />
     <EmbeddedResource Remove="Domain\**" />
+    <EmbeddedResource Remove="Infrastructure\**" />
+    <None Remove="Api\**" />
     <None Remove="Domain\**" />
+    <None Remove="Infrastructure\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,11 +28,6 @@
     <ProjectReference Include="..\..\..\src\GtMotive.Estimate.Microservice.Api\GtMotive.Estimate.Microservice.Api.csproj" />
     <ProjectReference Include="..\..\..\src\GtMotive.Estimate.Microservice.ApplicationCore\GtMotive.Estimate.Microservice.ApplicationCore.csproj" />
     <ProjectReference Include="..\..\..\src\GtMotive.Estimate.Microservice.Infrastructure\GtMotive.Estimate.Microservice.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Api\" />
-    <Folder Include="Infrastructure\" />
   </ItemGroup>
 
 </Project>

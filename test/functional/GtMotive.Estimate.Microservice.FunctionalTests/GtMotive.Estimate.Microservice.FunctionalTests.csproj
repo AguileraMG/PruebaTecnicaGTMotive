@@ -8,6 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Specs\**" />
+      <EmbeddedResource Remove="Specs\**" />
+      <None Remove="Specs\**" />
+    </ItemGroup>
+
+    <ItemGroup>
         <None Remove="appsettings.json" />
     </ItemGroup>
 
@@ -30,10 +36,6 @@
     <ItemGroup>
         <ProjectReference Include="..\..\..\src\GtMotive.Estimate.Microservice.Api\GtMotive.Estimate.Microservice.Api.csproj" />
         <ProjectReference Include="..\..\..\src\GtMotive.Estimate.Microservice.Infrastructure\GtMotive.Estimate.Microservice.Infrastructure.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Specs\" />
     </ItemGroup>
 
 </Project>

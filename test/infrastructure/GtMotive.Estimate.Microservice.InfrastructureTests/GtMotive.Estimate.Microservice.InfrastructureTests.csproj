@@ -8,6 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Specs\**" />
+      <EmbeddedResource Remove="Specs\**" />
+      <None Remove="Specs\**" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Acheve.TestHost" />
         <PackageReference Include="MongoDB.Driver" Version="3.6.0" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.2" />
@@ -22,10 +28,6 @@
         <None Update="appsettings.IntegrationTest.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Specs\" />
     </ItemGroup>
 
 </Project>
