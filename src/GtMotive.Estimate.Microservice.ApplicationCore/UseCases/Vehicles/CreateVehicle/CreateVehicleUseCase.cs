@@ -5,6 +5,7 @@ using GtMotive.Estimate.Microservice.ApplicationCore.Repositories;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Abstractions;
 using GtMotive.Estimate.Microservice.Domain;
 using GtMotive.Estimate.Microservice.Domain.Entities;
+using GtMotive.Estimate.Microservice.Domain.Interfaces;
 
 namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Vehicles.CreateVehicle
 {
@@ -14,10 +15,12 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Vehicles.Creat
     /// </summary>
     public sealed class CreateVehicleUseCase(
         ICreateVehicleOutputPort outputPort,
-        IVehicleRepository vehicleRepository) : IUseCase<CreateVehicleInput>
+        IVehicleRepository vehicleRepository,
+        IAppLogger<CreateVehicleUseCase> logger) : IUseCase<CreateVehicleInput>
     {
         private readonly ICreateVehicleOutputPort _outputPort = outputPort ?? throw new ArgumentNullException(nameof(outputPort));
         private readonly IVehicleRepository _vehicleRepository = vehicleRepository ?? throw new ArgumentNullException(nameof(vehicleRepository));
+        private readonly IAppLogger<CreateVehicleUseCase> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         /// <summary>
         /// Executes the create vehicle use case.
@@ -28,12 +31,14 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Vehicles.Creat
         public async Task ExecuteAsync(CreateVehicleInput input, CancellationToken ct)
         {
             ArgumentNullException.ThrowIfNull(input);
+            _logger.LogInformation("Create vehicle requested. Brand: {Brand}, Model: {Model}, Plate: {LicensePlate}", input.Brand, input.Model, input.LicensePlate);
 
             // Conflict: License plate already exists
             var existingVehicle = await _vehicleRepository.GetByLicensePlateAsync(input.LicensePlate, ct);
             if (existingVehicle != null)
             {
-                _outputPort.ConflictHandle($"A vehicle with license plate '{input.LicensePlate}' already exists.");
+                _logger.LogWarning("Vehicle creation failed: License plate already exists. Plate: {LicensePlate}", input.LicensePlate);
+                _outputPort.ConflictHandle($"A vehicle with license plate {input.LicensePlate} already exists");
                 return;
             }
 
@@ -55,6 +60,8 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Vehicles.Creat
             }
 
             await _vehicleRepository.AddAsync(vehicle, ct);
+
+            _logger.LogInformation("Vehicle created. VehicleId: {VehicleId}, Status: {Status}", vehicle.Id, vehicle.Status);
 
             var output = new CreateVehicleOutput
             {

@@ -5,6 +5,7 @@ using GtMotive.Estimate.Microservice.ApplicationCore.Repositories;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Abstractions;
 using GtMotive.Estimate.Microservice.Domain;
 using GtMotive.Estimate.Microservice.Domain.Entities;
+using GtMotive.Estimate.Microservice.Domain.Interfaces;
 
 namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Customers.CreateCustomer
 {
@@ -14,10 +15,12 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Customers.Crea
     /// </summary>
     public sealed class CreateCustomerUseCase(
         ICreateCustomerOutputPort outputPort,
-        ICustomerRepository customerRepository) : IUseCase<CreateCustomerInput>
+        ICustomerRepository customerRepository,
+        IAppLogger<CreateCustomerUseCase> logger) : IUseCase<CreateCustomerInput>
     {
         private readonly ICreateCustomerOutputPort _outputPort = outputPort ?? throw new ArgumentNullException(nameof(outputPort));
         private readonly ICustomerRepository _customerRepository = customerRepository ?? throw new ArgumentNullException(nameof(customerRepository));
+        private readonly IAppLogger<CreateCustomerUseCase> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         /// <summary>
         /// Executes the create customer use case.
@@ -28,12 +31,14 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Customers.Crea
         public async Task ExecuteAsync(CreateCustomerInput input, CancellationToken ct)
         {
             ArgumentNullException.ThrowIfNull(input);
+            _logger.LogInformation("Create customer requested. Email: {Email}", input.Email);
 
             // Conflict: Email already exists
             var existingCustomer = await _customerRepository.GetByEmailAsync(input.Email, ct);
             if (existingCustomer != null)
             {
-                _outputPort.ConflictHandle($"A customer with email '{input.Email}' already exists.");
+                _logger.LogWarning("Customer creation failed: Email already exists. Email: {Email}", input.Email);
+                _outputPort.ConflictHandle($"A customer with email {input.Email} already exists");
                 return;
             }
 
@@ -63,6 +68,8 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Customers.Crea
             }
 
             await _customerRepository.AddAsync(customer, ct);
+
+            _logger.LogInformation("Customer created. CustomerId: {CustomerId}", customer.Id);
 
             var output = new CreateCustomerOutput
             {

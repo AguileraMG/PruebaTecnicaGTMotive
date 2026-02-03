@@ -5,6 +5,7 @@ using GtMotive.Estimate.Microservice.ApplicationCore.Repositories;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Abstractions;
 using GtMotive.Estimate.Microservice.Domain;
 using GtMotive.Estimate.Microservice.Domain.Entities;
+using GtMotive.Estimate.Microservice.Domain.Interfaces;
 
 namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Rentals.RentVehicle
 {
@@ -16,12 +17,14 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Rentals.RentVe
         IRentVehicleOutputPort outputPort,
         IVehicleRepository vehicleRepository,
         ICustomerRepository customerRepository,
-        IRentalRepository rentalRepository) : IUseCase<RentVehicleInput>
+        IRentalRepository rentalRepository,
+        IAppLogger<RentVehicleUseCase> logger) : IUseCase<RentVehicleInput>
     {
         private readonly IRentVehicleOutputPort _outputPort = outputPort ?? throw new ArgumentNullException(nameof(outputPort));
         private readonly IVehicleRepository _vehicleRepository = vehicleRepository ?? throw new ArgumentNullException(nameof(vehicleRepository));
         private readonly ICustomerRepository _customerRepository = customerRepository ?? throw new ArgumentNullException(nameof(customerRepository));
         private readonly IRentalRepository _rentalRepository = rentalRepository ?? throw new ArgumentNullException(nameof(rentalRepository));
+        private readonly IAppLogger<RentVehicleUseCase> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         /// <summary>
         /// Executes the rent vehicle use case.
@@ -32,12 +35,14 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Rentals.RentVe
         public async Task ExecuteAsync(RentVehicleInput input, CancellationToken ct)
         {
             ArgumentNullException.ThrowIfNull(input);
+            _logger.LogInformation("Rent vehicle requested. VehicleId: {VehicleId}, CustomerId: {CustomerId}", input.VehicleId, input.CustomerId);
 
             // Not Found: Vehicle doesn't exist
             var vehicle = await _vehicleRepository.GetByIdAsync(input.VehicleId, ct);
             if (vehicle == null)
             {
-                _outputPort.NotFoundHandle($"Vehicle with ID '{input.VehicleId}' not found.");
+                _logger.LogWarning("Rental failed: Vehicle not found. VehicleId: {VehicleId}", input.VehicleId);
+                _outputPort.NotFoundHandle($"Vehicle with ID {input.VehicleId} not found");
                 return;
             }
 
@@ -61,7 +66,8 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Rentals.RentVe
             var customer = await _customerRepository.GetByIdAsync(input.CustomerId, ct);
             if (customer == null)
             {
-                _outputPort.NotFoundHandle($"Customer with ID '{input.CustomerId}' not found.");
+                _logger.LogWarning("Rental failed: Customer not found. CustomerId: {CustomerId}", input.CustomerId);
+                _outputPort.NotFoundHandle($"Customer with ID {input.CustomerId} not found");
                 return;
             }
 
@@ -69,7 +75,7 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Rentals.RentVe
             if (!customer.CanRentVehicle())
             {
                 _outputPort.ConflictHandle(
-                    $"Customer '{customer.Name}' cannot rent a vehicle because he already has an active rental.");
+                    $"Customer {customer.Name} already has an active rental");
                 return;
             }
 
@@ -105,6 +111,7 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.UseCases.Rentals.RentVe
 
             // Save the rental
             await _rentalRepository.AddAsync(rental, ct);
+            _logger.LogInformation("Rental created. RentalId: {RentalId}, VehiclePlate: {LicensePlate}", rental.Id, vehicle.LicensePlate);
 
             // Prepare the output response
             var output = new RentVehicleOutput
